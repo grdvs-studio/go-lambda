@@ -14,11 +14,11 @@ terraform {
     # Then initialize with: terraform init -backend-config=backend.tfvars
     # 
     # The backend.tfvars file should contain:
-      bucket         = "tfstate-f98khg474"
-      key            = "health-check-lambda/terraform.tfstate"
-      region         = "us-east-1"
-      dynamodb_table = "terraform-state-lock"
-      encrypt        = true
+    bucket         = "tfstate-f98khg474"
+    key            = "health-check-lambda/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "terraform-state-lock"
+    encrypt        = true
   }
 }
 
