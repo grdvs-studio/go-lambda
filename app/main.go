@@ -25,7 +25,10 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 			StatusCode: 500,
 			Body:       `{"status":"error","message":"Internal server error"}`,
 			Headers: map[string]string{
-				"Content-Type": "application/json",
+				"Content-Type":                "application/json",
+				"Access-Control-Allow-Origin":  "*",
+				"Access-Control-Allow-Methods": "GET, OPTIONS",
+				"Access-Control-Allow-Headers": "Content-Type, X-Amz-Date, Authorization, X-Api-Key, X-Amz-Security-Token",
 			},
 		}, err
 	}
@@ -34,7 +37,10 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		StatusCode: 200,
 		Body:       string(body),
 		Headers: map[string]string{
-			"Content-Type": "application/json",
+			"Content-Type":                "application/json",
+			"Access-Control-Allow-Origin":  "*",
+			"Access-Control-Allow-Methods": "GET, OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type, X-Amz-Date, Authorization, X-Api-Key, X-Amz-Security-Token",
 		},
 	}, nil
 }

@@ -27,3 +27,9 @@ variable "stage_name" {
   type        = string
   default     = "v1"
 }
+
+variable "waf_rate_limit" {
+  description = "Rate limit for WAF (requests per 5 minutes per IP)"
+  type        = number
+  default     = 2000
+}
