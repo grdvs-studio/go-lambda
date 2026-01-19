@@ -40,6 +40,18 @@ jobs:
             terraform init
           fi
 
+      - name: Create dummy Lambda zip file
+        run: |
+          # Create a dummy zip file if it doesn't exist (needed for terraform destroy to read source_code_hash)
+          if [ ! -f bootstrap.zip ]; then
+            mkdir -p dummy
+            touch dummy/bootstrap
+            cd dummy
+            zip ../bootstrap.zip bootstrap
+            cd ..
+            rm -rf dummy
+          fi
+
       - name: Terraform Destroy
         working-directory: ./terraform
         run: terraform destroy -auto-approve -no-color -input=false
