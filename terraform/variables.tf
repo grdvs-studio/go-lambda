@@ -28,6 +28,12 @@ variable "stage_name" {
   default     = "v1"
 }
 
+variable "enable_waf" {
+  description = "Enable WAF for API Gateway"
+  type        = bool
+  default     = true
+}
+
 variable "waf_rate_limit" {
   description = "Rate limit for WAF (requests per 5 minutes per IP)"
   type        = number

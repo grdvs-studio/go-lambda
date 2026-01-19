@@ -26,161 +26,43 @@ provider "aws" {
   region = var.aws_region
 }
 
-# IAM Role for Lambda
-resource "aws_iam_role" "lambda_role" {
-  name_prefix = "${var.lambda_function_name}-role-"
+# Lambda module for health check function
+module "health_check_lambda" {
+  source = "./modules/lambda"
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-      }
-    ]
-  })
+  function_name = var.lambda_function_name
+  zip_path      = var.lambda_zip_path
+  environment   = var.environment
+  timeout       = 30
+  memory_size   = 128
 }
 
-# Basic Lambda execution policy
-resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
-  role       = aws_iam_role.lambda_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}
+# API Gateway module
+module "api_gateway" {
+  source = "./modules/api-gateway"
 
-# Lambda function
-resource "aws_lambda_function" "health_check" {
-  filename         = var.lambda_zip_path
-  function_name    = var.lambda_function_name
-  role             = aws_iam_role.lambda_role.arn
-  handler          = "bootstrap"
-  source_code_hash = filebase64sha256(var.lambda_zip_path)
-  runtime          = "provided.al2023"
-  architectures    = ["arm64"]
+  api_name        = "${var.lambda_function_name}-api"
+  api_description = "API Gateway for ${var.lambda_function_name}"
+  stage_name      = var.stage_name
 
-  timeout     = 30
-  memory_size = 128
-
-  environment {
-    variables = {
-      ENVIRONMENT = var.environment
+  endpoints = [
+    {
+      path                 = "health"
+      http_methods         = ["GET"]
+      lambda_invoke_arn    = module.health_check_lambda.invoke_arn
+      lambda_function_name = module.health_check_lambda.function_name
+      authorization        = "NONE"
+      cors_enabled         = true
     }
-  }
-
-  depends_on = [aws_iam_role_policy_attachment.lambda_basic_execution]
-}
-
-# API Gateway REST API
-resource "aws_api_gateway_rest_api" "api" {
-  name        = "${var.lambda_function_name}-api"
-  description = "API Gateway for health check lambda"
-}
-
-# API Gateway Resource
-resource "aws_api_gateway_resource" "health" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_rest_api.api.root_resource_id
-  path_part   = "health"
-}
-
-# API Gateway Method
-resource "aws_api_gateway_method" "get" {
-  rest_api_id   = aws_api_gateway_rest_api.api.id
-  resource_id   = aws_api_gateway_resource.health.id
-  http_method   = "GET"
-  authorization = "NONE"
-}
-
-# Lambda Permission
-resource "aws_lambda_permission" "apigw" {
-  statement_id  = "AllowAPIGatewayInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.health_check.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
-}
-
-# API Gateway Integration
-resource "aws_api_gateway_integration" "lambda" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  resource_id = aws_api_gateway_resource.health.id
-  http_method = aws_api_gateway_method.get.http_method
-
-  integration_http_method = "POST"
-  type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.health_check.invoke_arn
-}
-
-# OPTIONS method for CORS preflight
-resource "aws_api_gateway_method" "options" {
-  rest_api_id   = aws_api_gateway_rest_api.api.id
-  resource_id   = aws_api_gateway_resource.health.id
-  http_method   = "OPTIONS"
-  authorization = "NONE"
-}
-
-# OPTIONS method integration (mock response for CORS)
-resource "aws_api_gateway_integration" "options" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  resource_id = aws_api_gateway_resource.health.id
-  http_method = aws_api_gateway_method.options.http_method
-  type        = "MOCK"
-
-  request_templates = {
-    "application/json" = "{\"statusCode\": 200}"
-  }
-}
-
-# OPTIONS method response
-resource "aws_api_gateway_method_response" "options" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  resource_id = aws_api_gateway_resource.health.id
-  http_method = aws_api_gateway_method.options.http_method
-  status_code = "200"
-
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = true
-    "method.response.header.Access-Control-Allow-Methods" = true
-    "method.response.header.Access-Control-Allow-Origin"  = true
-  }
-}
-
-# OPTIONS integration response
-resource "aws_api_gateway_integration_response" "options" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  resource_id = aws_api_gateway_resource.health.id
-  http_method = aws_api_gateway_method.options.http_method
-  status_code = aws_api_gateway_method_response.options.status_code
-
-  response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-    "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS'"
-    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
-  }
-
-  depends_on = [aws_api_gateway_integration.options]
-}
-
-# API Gateway Deployment
-resource "aws_api_gateway_deployment" "deployment" {
-  depends_on = [
-    aws_api_gateway_integration.lambda,
-    aws_api_gateway_integration.options,
-    aws_api_gateway_integration_response.options,
   ]
 
-  rest_api_id = aws_api_gateway_rest_api.api.id
+  cors_allowed_origins = "*"
+  cors_allowed_methods = "GET,OPTIONS"
+  cors_allowed_headers = "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token"
 
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-# API Gateway Stage
-resource "aws_api_gateway_stage" "stage" {
-  deployment_id = aws_api_gateway_deployment.deployment.id
-  rest_api_id   = aws_api_gateway_rest_api.api.id
-  stage_name    = var.stage_name
+  # WAF configuration
+  enable_waf     = var.enable_waf
+  waf_rate_limit = var.waf_rate_limit
+  waf_name       = "${var.lambda_function_name}-waf"
+  environment    = var.environment
 }
