@@ -58,6 +58,7 @@ resource "aws_lambda_function" "health_check" {
   handler          = "bootstrap"
   source_code_hash = filebase64sha256(var.lambda_zip_path)
   runtime          = "provided.al2023"
+  architectures    = ["arm64"]
 
   timeout     = 30
   memory_size = 128
