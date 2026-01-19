@@ -102,7 +102,7 @@ resource "aws_wafv2_web_acl" "api_gateway" {
 
   visibility_config {
     cloudwatch_metrics_enabled = true
-    metric_name                  = "${var.lambda_function_name}-waf"
+    metric_name                = "${var.lambda_function_name}-waf"
     sampled_requests_enabled   = true
   }
 
