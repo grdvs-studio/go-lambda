@@ -41,12 +41,12 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
 resource "aws_lambda_function" "health_check" {
   filename         = var.lambda_zip_path
   function_name    = var.lambda_function_name
-  role            = aws_iam_role.lambda_role.arn
-  handler         = "main"
+  role             = aws_iam_role.lambda_role.arn
+  handler          = "main"
   source_code_hash = filebase64sha256(var.lambda_zip_path)
-  runtime         = "provided.al2023"
+  runtime          = "provided.al2023"
 
-  timeout = 30
+  timeout     = 30
   memory_size = 128
 
   environment {
