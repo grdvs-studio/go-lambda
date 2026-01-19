@@ -58,9 +58,21 @@ jobs:
         working-directory: ./terraform
         run: terraform fmt -check
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
       - name: Terraform Validate
         working-directory: ./terraform
-        run: terraform init && terraform validate
+        run: |
+          if [ -f backend.tfvars ]; then
+            terraform init -backend-config=backend.tfvars && terraform validate
+          else
+            terraform init && terraform validate
+          fi
 
   deploy:
     needs: test
