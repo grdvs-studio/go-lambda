@@ -42,7 +42,7 @@ resource "aws_lambda_function" "health_check" {
   filename         = var.lambda_zip_path
   function_name    = var.lambda_function_name
   role             = aws_iam_role.lambda_role.arn
-  handler          = "main"
+  handler          = "bootstrap"
   source_code_hash = filebase64sha256(var.lambda_zip_path)
   runtime          = "provided.al2023"
 

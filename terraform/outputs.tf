@@ -10,10 +10,10 @@ output "lambda_function_arn" {
 
 output "api_gateway_url" {
   description = "URL of the API Gateway endpoint"
-  value       = "${aws_api_gateway_deployment.deployment.invoke_url}/health"
+  value       = "${aws_api_gateway_stage.stage.invoke_url}/health"
 }
 
 output "api_gateway_invoke_url" {
   description = "Base URL of the API Gateway"
-  value       = aws_api_gateway_deployment.deployment.invoke_url
+  value       = aws_api_gateway_stage.stage.invoke_url
 }
