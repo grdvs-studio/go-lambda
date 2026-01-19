@@ -1,12 +1,23 @@
-.PHONY: build deploy init plan apply destroy clean
+.PHONY: build deploy init init-backend plan apply destroy clean setup-backend
 
 build:
 	@echo "Building Lambda function..."
 	@./build.sh
 
+setup-backend:
+	@echo "Setting up S3 backend for Terraform state..."
+	@./s3-backend.sh
+
 init:
 	@echo "Initializing Terraform..."
-	@cd terraform && terraform init
+	@if [ -f terraform/backend.tfvars ]; then \
+		cd terraform && terraform init -backend-config=backend.tfvars; \
+	else \
+		echo "⚠️  backend.tfvars not found. Run 'make setup-backend' first or initialize manually."; \
+		cd terraform && terraform init; \
+	fi
+
+init-backend: setup-backend init
 
 plan: build
 	@echo "Planning Terraform deployment..."

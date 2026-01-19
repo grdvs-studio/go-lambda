@@ -1,0 +1,11 @@
+# Terraform S3 Backend Configuration
+# Copy this file to backend.tfvars and fill in your values
+# Or set these as environment variables:
+#   export TF_STATE_BUCKET=your-bucket-name
+#   export TF_STATE_LOCK_TABLE=your-table-name
+
+bucket         = "terraform-state-ACCOUNT_ID"
+key            = "go-lambda/terraform.tfstate"
+region         = "us-east-1"
+dynamodb_table = "terraform-state-lock"
+encrypt        = true

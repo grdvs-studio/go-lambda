@@ -7,6 +7,19 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  backend "s3" {
+    # Backend configuration is provided via backend.tfvars file
+    # Run ../s3-backend.sh first to create the bucket and DynamoDB table
+    # Then initialize with: terraform init -backend-config=backend.tfvars
+    # 
+    # The backend.tfvars file should contain:
+      bucket         = "tfstate-f98khg474"
+      key            = "health-check-lambda/terraform.tfstate"
+      region         = "us-east-1"
+      dynamodb_table = "terraform-state-lock"
+      encrypt        = true
+  }
 }
 
 provider "aws" {
