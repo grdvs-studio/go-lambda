@@ -15,7 +15,7 @@ type HealthCheckResponse struct {
 
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	response := HealthCheckResponse{
-		Status:  "healthy",
+		Status:  "Healthy",
 		Message: "Service is running normally",
 	}
 

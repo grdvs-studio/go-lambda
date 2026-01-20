@@ -30,8 +30,8 @@ func TestHandler(t *testing.T) {
 		t.Fatalf("Failed to unmarshal response: %v", err)
 	}
 
-	if healthResponse.Status != "healthy" {
-		t.Errorf("Expected status 'healthy', got '%s'", healthResponse.Status)
+	if healthResponse.Status != "Healthy" {
+		t.Errorf("Expected status 'Healthy', got '%s'", healthResponse.Status)
 	}
 
 	if healthResponse.Message != "Service is running normally" {
